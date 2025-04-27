@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Freelancer {
+  id                     String     @id @default(uuid())
+  name                   String
+  email                  String     @unique
+  password               String
+  isVerified             Boolean    @default(false)
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+  projects               Project[]
+  clients                Client[]
+  verifications          Verification[]
+}
+
+model Verification {
+  id  Int @id @default(autoincrement())
+  freelancerID String
+  freelancer   Freelancer @relation(fields: [freelancerID], references: [id], onDelete: Cascade)
+  type verificationType
+  verificationToken      String?
+  verificationTokenExpiresAt DateTime? 
+}
+
+enum verificationType {
+  email_verification
+  password_reset
+}
+
+
+model Client {
+  id          String     @id @default(uuid())
+  name        String
+  email       String     @unique
+  phone       String?    
+  company     String?
+  notes       String?
+  createdAt   DateTime   @default(now())
+
+  freelancerID String
+  freelancer   Freelancer @relation(fields: [freelancerID], references: [id], onDelete: Cascade)
+
+  projects     Project[]
+}
+
+
+model Project {
+  id           String       @id @default(uuid())
+  title        String
+  budget       Float
+  starttime    DateTime
+  deadline     DateTime
+  status       ProjectStatus
+  description  String?
+
+  clientID     String
+  freelancerID String
+
+  client       Client     @relation(fields: [clientID], references: [id], onDelete: Cascade)
+  freelancer   Freelancer @relation(fields: [freelancerID], references: [id], onDelete: Cascade)
+
+  logs         Log[]
+  reminders    Reminder[]
+}
+
+model Log {
+  id           String       @id @default(uuid())
+  date         DateTime
+  type         InteractionType
+  notes        String
+
+  projectID    String
+  project      Project    @relation(fields: [projectID], references: [id], onDelete: Cascade)
+}
+
+model Reminder {
+  id           String       @id @default(uuid())
+  title        String
+  duedate      DateTime
+  notes        String?
+
+  projectID    String
+  project      Project    @relation(fields: [projectID], references: [id], onDelete: Cascade)
+}
+
+enum ProjectStatus {
+  ONGOING
+  COMPLETED
+}
+
+enum InteractionType {
+  CALL
+  MEETING
+  EMAIL
+}
